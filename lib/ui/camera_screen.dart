@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'summary_screen.dart';
+import 'preview_screen.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -38,6 +38,24 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() {});
     }
   }
+  List<XFile?> capturedPhotos = List.filled(3, null);
+
+  Future<void> _onCapturePhoto(int buttonIndex) async {
+    if (!_controller.value.isInitialized) {
+      return;
+    }
+
+    try {
+      final XFile photo = await _controller.takePicture();
+
+      setState(() {
+        capturedPhotos[buttonIndex - 1] = photo;
+      });
+    } catch (e) {
+      print("Error capturing photo: $e");
+    }
+  }
+
 
   @override
   void initState() {
@@ -140,21 +158,15 @@ class _CameraScreenState extends State<CameraScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () {
-                    // Implement functionality for the left button
-                  },
+                  onPressed: () => _onCapturePhoto(1),
                   child: const Text('left'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Implement functionality for the middle button
-                  },
+                  onPressed: () => _onCapturePhoto(2),
                   child: const Text('middle'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Implement functionality for the right button
-                  },
+                  onPressed: () => _onCapturePhoto(3),
                   child: const Text('right'),
                 ),
                 ElevatedButton(
@@ -166,10 +178,12 @@ class _CameraScreenState extends State<CameraScreen> {
                     // Navigate to SummaryScreen on button press
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SummaryScreen()),
+                      MaterialPageRoute(builder: (context) => PreviewScreen(
+                        photos: capturedPhotos,
+                      )),
                     );
                   },
-                  child: const Text('Summary'),
+                  child: const Text('Preview'),
                 ),
               ],
             ),
