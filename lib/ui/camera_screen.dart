@@ -13,7 +13,7 @@ class _CameraScreenState extends State<CameraScreen> {
   late CameraController _controller;
   late List<CameraDescription> cameras;
   bool isCameraReady = false;
-
+  bool isFlashOn = false;
   bool isFrontCamera = false;
 
   void _onFlipCamera() async {
@@ -44,7 +44,25 @@ class _CameraScreenState extends State<CameraScreen> {
     if (!_controller.value.isInitialized) {
       return;
     }
-
+    if(!isFlashOn){
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Flash Required'),
+            content: const Text('Please turn on the flash to capture a photo.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
     try {
       final XFile photo = await _controller.takePicture();
 
@@ -52,7 +70,7 @@ class _CameraScreenState extends State<CameraScreen> {
         capturedPhotos[buttonIndex - 1] = photo;
       });
     } catch (e) {
-      print("Error capturing photo: $e");
+     // print("Error capturing photo: $e");
     }
   }
 
@@ -77,6 +95,24 @@ class _CameraScreenState extends State<CameraScreen> {
     setState(() {
       isCameraReady = true;
     });
+  }
+
+  Future<void> _toggleFlash() async {
+    if (!_controller.value.isInitialized) {
+      return;
+    }
+
+    if (_controller.value.flashMode == FlashMode.off) {
+      await _controller.setFlashMode(FlashMode.torch);
+      setState(() {
+        isFlashOn = true;
+      });
+    } else {
+      await _controller.setFlashMode(FlashMode.off);
+      setState(() {
+        isFlashOn = false;
+      });
+    }
   }
 
   @override
@@ -149,6 +185,20 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: IconButton(
+                icon: Icon(
+                  isFlashOn ? Icons.flash_on : Icons.flash_off,
+                  size: 36,
+                  color: Colors.black,
+                ),
+                onPressed: _toggleFlash,
               ),
             ),
           ),
