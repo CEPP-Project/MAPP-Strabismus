@@ -15,6 +15,7 @@ class _CameraScreenState extends State<CameraScreen> {
   bool isCameraReady = false;
   bool isFlashOn = false;
   bool isFrontCamera = false;
+  List<bool> isPhotoCaptured = [false, false, false];
 
   void _onFlipCamera() async {
     // Ensure that the controller is initialized
@@ -27,8 +28,9 @@ class _CameraScreenState extends State<CameraScreen> {
 
     // Flip the camera
     isFrontCamera = !isFrontCamera;
-    CameraDescription newDescription =
-    isFrontCamera ? cameras[1] : cameras[0]; // Assuming front camera is at index 1
+    CameraDescription newDescription = isFrontCamera
+        ? cameras[1]
+        : cameras[0]; // Assuming front camera is at index 1
 
     // Initialize a new controller
     _controller = CameraController(newDescription, ResolutionPreset.medium);
@@ -38,13 +40,14 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() {});
     }
   }
+
   List<XFile?> capturedPhotos = List.filled(3, null);
 
   Future<void> _onCapturePhoto(int buttonIndex) async {
     if (!_controller.value.isInitialized) {
       return;
     }
-    if(!isFlashOn){
+    if (!isFlashOn) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -62,18 +65,19 @@ class _CameraScreenState extends State<CameraScreen> {
           );
         },
       );
+      return;
     }
     try {
       final XFile photo = await _controller.takePicture();
 
       setState(() {
         capturedPhotos[buttonIndex - 1] = photo;
+        isPhotoCaptured[buttonIndex - 1] = true;
       });
     } catch (e) {
-     // print("Error capturing photo: $e");
+      // print("Error capturing photo: $e");
     }
   }
-
 
   @override
   void initState() {
@@ -132,9 +136,9 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Camera Screen'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Camera Screen'),
+      // ),
       body: Stack(
         children: [
           CameraPreview(_controller),
@@ -146,7 +150,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 children: [
                   Positioned(
                     left: 0,
-                    top: 20,
+                    top: 40,
                     child: Container(
                       width: 100,
                       height: 60,
@@ -166,7 +170,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                   Positioned(
                     right: 0,
-                    top: 20,
+                    top: 40,
                     child: Container(
                       width: 100,
                       height: 60,
@@ -189,55 +193,92 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
           ),
           Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: IconButton(
-                icon: Icon(
-                  isFlashOn ? Icons.flash_on : Icons.flash_off,
-                  size: 36,
-                  color: Colors.black,
-                ),
-                onPressed: _toggleFlash,
+              alignment: Alignment.centerRight,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: IconButton(
+                      icon: Icon(
+                        isFlashOn ? Icons.flash_on : Icons.flash_off,
+                        size: 36,
+                        color: Colors.black,
+                      ),
+                      onPressed: _toggleFlash,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: ListWheelScrollView(
+                      itemExtent: 100,
+                      children: [
+                        _buildCaptureButton(1),
+                        _buildCaptureButton(2),
+                        _buildCaptureButton(3),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.flip_camera_android,
+                        size: 36,
+                        color: Colors.black,
+                      ),
+                      onPressed: _onFlipCamera,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Navigate to SummaryScreen on button press
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => PreviewScreen(
+                                  photos: capturedPhotos,
+                                )),
+                      );
+                    },
+                    child: const Text('Finish'),
+                  ),
+                ],
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCaptureButton(int buttonIndex) {
+    return SizedBox(
+      height: 100,
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          ElevatedButton(
+            onPressed: () => _onCapturePhoto(buttonIndex),
+            style: ElevatedButton.styleFrom(
+              fixedSize: const Size(100, 100), // Set the fixed size for the button
+              padding: const EdgeInsets.all(0), // Remove default padding
+              alignment: Alignment.center, // Center the text within the button
+            ),
+            child: Text(
+                buttonIndex == 1
+                    ? 'left'
+                    : buttonIndex == 2
+                        ? 'middle'
+                        : 'right'),
+          ),
+          if (isPhotoCaptured[buttonIndex - 1])
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(
+                Icons.check,
+                color: Colors.green,
               ),
             ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _onCapturePhoto(1),
-                  child: const Text('left'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _onCapturePhoto(2),
-                  child: const Text('middle'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _onCapturePhoto(3),
-                  child: const Text('right'),
-                ),
-                ElevatedButton(
-                  onPressed: _onFlipCamera, // Call the flip camera function
-                  child: const Text('Flip Camera'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Navigate to SummaryScreen on button press
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => PreviewScreen(
-                        photos: capturedPhotos,
-                      )),
-                    );
-                  },
-                  child: const Text('Preview'),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
