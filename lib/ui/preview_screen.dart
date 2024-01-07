@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'summary_screen.dart';
+import 'loading_screen.dart';
 
 class PreviewScreen extends StatelessWidget {
   final List<XFile?> photos;
@@ -28,7 +28,7 @@ class PreviewScreen extends StatelessWidget {
               // Navigate to ResultScreen if all photos are taken
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SummaryScreen()),
+                MaterialPageRoute(builder: (context) => LoadingScreen(photos: photos)),
               );
             } else {
               // Show a pop-up if not all photos are taken
