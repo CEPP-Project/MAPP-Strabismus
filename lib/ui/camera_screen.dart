@@ -15,6 +15,7 @@ class _CameraScreenState extends State<CameraScreen> {
   bool isCameraReady = false;
   bool isFlashOn = false;
   bool isFrontCamera = false;
+  int nowCamera = 0;
   List<bool> isPhotoCaptured = [false, false, false];
 
   void _onFlipCamera() async {
@@ -28,13 +29,20 @@ class _CameraScreenState extends State<CameraScreen> {
 
     // Flip the camera
     isFrontCamera = !isFrontCamera;
-    CameraDescription newDescription = isFrontCamera
-        ? cameras[1]
-        : cameras[0]; // Assuming front camera is at index 1
+    nowCamera = 1 - nowCamera;
+    CameraDescription newDescription = cameras[nowCamera];
 
     // Initialize a new controller
     _controller = CameraController(newDescription, ResolutionPreset.medium);
     await _controller.initialize();
+
+    if (isFrontCamera) {
+      // Clear flash if switch to front camera
+      await _controller.setFlashMode(FlashMode.off);
+      setState(() {
+        isFlashOn = false;
+      });
+    }
 
     if (mounted) {
       setState(() {});
@@ -88,6 +96,10 @@ class _CameraScreenState extends State<CameraScreen> {
   Future<void> _initializeCamera() async {
     cameras = await availableCameras();
 
+    isFrontCamera = cameras.isNotEmpty &&
+        cameras[0].lensDirection == CameraLensDirection.front;
+    nowCamera = 0;
+
     _controller = CameraController(cameras[0], ResolutionPreset.medium);
 
     await _controller.initialize();
@@ -96,6 +108,8 @@ class _CameraScreenState extends State<CameraScreen> {
       return;
     }
 
+    await _controller.setFlashMode(FlashMode.off);
+
     setState(() {
       isCameraReady = true;
     });
@@ -103,6 +117,9 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _toggleFlash() async {
     if (!_controller.value.isInitialized) {
+      return;
+    }
+    if (isFrontCamera) {
       return;
     }
 
@@ -194,58 +211,63 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
           Align(
               alignment: Alignment.centerRight,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: IconButton(
-                      icon: Icon(
-                        isFlashOn ? Icons.flash_on : Icons.flash_off,
-                        size: 36,
-                        color: Colors.black,
+              child: Container(
+                  color: Colors.grey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: IconButton(
+                          icon: Icon(
+                            isFlashOn ? Icons.flash_on : Icons.flash_off,
+                            size: 36,
+                            color: Colors.black,
+                          ),
+                          onPressed: _toggleFlash,
+                        ),
                       ),
-                      onPressed: _toggleFlash,
-                    ),
-                  ),
-                  SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: ListWheelScrollView(
-                      itemExtent: 100,
-                      children: [
-                        _buildCaptureButton(1),
-                        _buildCaptureButton(2),
-                        _buildCaptureButton(3),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.flip_camera_android,
-                        size: 36,
-                        color: Colors.black,
+                      SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: ListWheelScrollView(
+                          itemExtent: 100,
+                          children: [
+                            _buildCaptureButton(1),
+                            _buildCaptureButton(2),
+                            _buildCaptureButton(3),
+                          ],
+                        ),
                       ),
-                      onPressed: _onFlipCamera,
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Navigate to SummaryScreen on button press
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => PreviewScreen(
-                                  photos: capturedPhotos,
-                                )),
-                      );
-                    },
-                    child: const Text('Finish'),
-                  ),
-                ],
-              )),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.flip_camera_android,
+                            size: 36,
+                            color: Colors.black,
+                          ),
+                          onPressed: _onFlipCamera,
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (isFlashOn) {
+                            _toggleFlash();
+                          }
+                          // Navigate to SummaryScreen on button press
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => PreviewScreen(
+                                      photos: capturedPhotos,
+                                    )),
+                          );
+                        },
+                        child: const Text('Finish'),
+                      ),
+                    ],
+                  ))),
         ],
       ),
     );
@@ -260,16 +282,16 @@ class _CameraScreenState extends State<CameraScreen> {
           ElevatedButton(
             onPressed: () => _onCapturePhoto(buttonIndex),
             style: ElevatedButton.styleFrom(
-              fixedSize: const Size(100, 100), // Set the fixed size for the button
+              fixedSize:
+                  const Size(100, 100), // Set the fixed size for the button
               padding: const EdgeInsets.all(0), // Remove default padding
               alignment: Alignment.center, // Center the text within the button
             ),
-            child: Text(
-                buttonIndex == 1
-                    ? 'left'
-                    : buttonIndex == 2
-                        ? 'middle'
-                        : 'right'),
+            child: Text(buttonIndex == 1
+                ? 'left'
+                : buttonIndex == 2
+                    ? 'middle'
+                    : 'right'),
           ),
           if (isPhotoCaptured[buttonIndex - 1])
             const Padding(
