@@ -10,13 +10,19 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
+  final ScrollController _scrollController = ScrollController();
+  List<String> items = ["left", "middle", "right", ""];
+  double scrollItemHeight = 25.0;
+  int selectedIndex = 0;
+
+  List<XFile?> capturedPhotos = List.filled(3, null);
   late CameraController _controller;
   late List<CameraDescription> cameras;
   bool isCameraReady = false;
   bool isFlashOn = false;
   bool isFrontCamera = false;
   int nowCamera = 0;
-  List<bool> isPhotoCaptured = [false, false, false];
+  List<bool> isPhotoCaptured = [false, false, false,false];
 
   void _onFlipCamera() async {
     // Ensure that the controller is initialized
@@ -48,8 +54,6 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() {});
     }
   }
-
-  List<XFile?> capturedPhotos = List.filled(3, null);
 
   Future<void> _onCapturePhoto(int buttonIndex) async {
     if (!_controller.value.isInitialized) {
@@ -91,6 +95,7 @@ class _CameraScreenState extends State<CameraScreen> {
   void initState() {
     super.initState();
     _initializeCamera();
+    _scrollController.addListener(_scrollListener);
   }
 
   Future<void> _initializeCamera() async {
@@ -136,9 +141,24 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
+  void _scrollListener() {
+    double center = _scrollController.offset +
+        _scrollController.position.viewportDimension / 2 -
+        35;
+    int middleIndex = (center / scrollItemHeight).round();
+
+    setState(() {
+      selectedIndex = middleIndex;
+    });
+
+    // Do something with the middleIndex, like updating the UI or performing an action
+    //print("Middle Index: $middleIndex");
+  }
+
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -230,17 +250,34 @@ class _CameraScreenState extends State<CameraScreen> {
                       SizedBox(
                         width: 100,
                         height: 100,
-                        child: ListWheelScrollView(
-                          itemExtent: 100,
-                          children: [
-                            _buildCaptureButton(1),
-                            _buildCaptureButton(2),
-                            _buildCaptureButton(3),
-                          ],
+                        child: _buildCaptureButton(),
+                      ),
+                      SizedBox(
+                        height: 60.0,
+                        width: 80,
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount: items.length,
+                          itemExtent: scrollItemHeight,
+                          itemBuilder: (context, index) {
+                            return Center(
+                              child: Text(
+                                items[index],
+                                style: TextStyle(
+                                  fontSize: 20.0,
+                                  color: isPhotoCaptured[index]
+                                      ? Colors.green
+                                      : index == selectedIndex
+                                          ? Colors.red
+                                          : Colors.black,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(12.0),
                         child: IconButton(
                           icon: const Icon(
                             Icons.flip_camera_android,
@@ -273,35 +310,25 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-  Widget _buildCaptureButton(int buttonIndex) {
+  Widget _buildCaptureButton() {
     return SizedBox(
+      width: 100,
       height: 100,
-      child: Stack(
-        alignment: Alignment.topRight,
-        children: [
-          ElevatedButton(
-            onPressed: () => _onCapturePhoto(buttonIndex),
-            style: ElevatedButton.styleFrom(
-              fixedSize:
-                  const Size(100, 100), // Set the fixed size for the button
-              padding: const EdgeInsets.all(0), // Remove default padding
-              alignment: Alignment.center, // Center the text within the button
-            ),
-            child: Text(buttonIndex == 1
-                ? 'left'
-                : buttonIndex == 2
-                    ? 'middle'
-                    : 'right'),
+      child: InkWell(
+        onTap: () {
+          _onCapturePhoto(selectedIndex + 1);
+        },
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.blue,
+            shape: BoxShape.circle,
           ),
-          if (isPhotoCaptured[buttonIndex - 1])
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Icon(
-                Icons.check,
-                color: Colors.green,
-              ),
-            ),
-        ],
+          child: const Icon(
+            Icons.camera_alt,
+            color: Colors.white,
+            size: 50,
+          ),
+        ),
       ),
     );
   }
