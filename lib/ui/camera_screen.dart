@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'preview_screen.dart';
+import 'loading_screen.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -10,11 +12,8 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  final ScrollController _scrollController = ScrollController();
-  List<String> items = ["left", "middle", "right", ""];
-  double scrollItemHeight = 25.0;
-  int selectedIndex = 0;
-
+  double width = 0;
+  double height = 0;
   List<XFile?> capturedPhotos = List.filled(3, null);
   late CameraController _controller;
   late List<CameraDescription> cameras;
@@ -22,7 +21,7 @@ class _CameraScreenState extends State<CameraScreen> {
   bool isFlashOn = false;
   bool isFrontCamera = false;
   int nowCamera = 0;
-  List<bool> isPhotoCaptured = [false, false, false,false];
+  List<bool> isPhotoCaptured = [false, false, false, false];
 
   void _onFlipCamera() async {
     // Ensure that the controller is initialized
@@ -83,8 +82,8 @@ class _CameraScreenState extends State<CameraScreen> {
       final XFile photo = await _controller.takePicture();
 
       setState(() {
-        capturedPhotos[buttonIndex - 1] = photo;
-        isPhotoCaptured[buttonIndex - 1] = true;
+        capturedPhotos[buttonIndex] = photo;
+        isPhotoCaptured[buttonIndex] = true;
       });
     } catch (e) {
       // print("Error capturing photo: $e");
@@ -95,7 +94,10 @@ class _CameraScreenState extends State<CameraScreen> {
   void initState() {
     super.initState();
     _initializeCamera();
-    _scrollController.addListener(_scrollListener);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
   }
 
   Future<void> _initializeCamera() async {
@@ -141,29 +143,23 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  void _scrollListener() {
-    double center = _scrollController.offset +
-        _scrollController.position.viewportDimension / 2 -
-        35;
-    int middleIndex = (center / scrollItemHeight).round();
-
-    setState(() {
-      selectedIndex = middleIndex;
-    });
-
-    // Do something with the middleIndex, like updating the UI or performing an action
-    //print("Middle Index: $middleIndex");
-  }
-
   @override
   void dispose() {
     _controller.dispose();
-    _scrollController.dispose();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    width = MediaQuery.of(context).size.width;
+    height = MediaQuery.of(context).size.height;
+
     if (!isCameraReady) {
       return const Scaffold(
         body: Center(
@@ -181,16 +177,16 @@ class _CameraScreenState extends State<CameraScreen> {
           CameraPreview(_controller),
           Center(
             child: SizedBox(
-              width: 250,
-              height: 100,
+              width: width,
+              height: height,
               child: Stack(
                 children: [
                   Positioned(
-                    left: 0,
-                    top: 40,
+                    left: width * 0.10,
+                    top: height * 0.4,
                     child: Container(
-                      width: 100,
-                      height: 60,
+                      width: 200,
+                      height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.rectangle,
                         borderRadius: const BorderRadius.horizontal(
@@ -206,11 +202,11 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
                   Positioned(
-                    right: 0,
-                    top: 40,
+                    right: width * 0.3,
+                    top: height * 0.4,
                     child: Container(
-                      width: 100,
-                      height: 60,
+                      width: 200,
+                      height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.rectangle,
                         borderRadius: const BorderRadius.horizontal(
@@ -236,8 +232,11 @@ class _CameraScreenState extends State<CameraScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
+                      _buildPhotoWidget(0),
+                      _buildPhotoWidget(1),
+                      _buildPhotoWidget(2),
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(4.0),
                         child: IconButton(
                           icon: Icon(
                             isFlashOn ? Icons.flash_on : Icons.flash_off,
@@ -247,37 +246,8 @@ class _CameraScreenState extends State<CameraScreen> {
                           onPressed: _toggleFlash,
                         ),
                       ),
-                      SizedBox(
-                        width: 100,
-                        height: 100,
-                        child: _buildCaptureButton(),
-                      ),
-                      SizedBox(
-                        height: 60.0,
-                        width: 80,
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: items.length,
-                          itemExtent: scrollItemHeight,
-                          itemBuilder: (context, index) {
-                            return Center(
-                              child: Text(
-                                items[index],
-                                style: TextStyle(
-                                  fontSize: 20.0,
-                                  color: isPhotoCaptured[index]
-                                      ? Colors.green
-                                      : index == selectedIndex
-                                          ? Colors.red
-                                          : Colors.black,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
                       Padding(
-                        padding: const EdgeInsets.all(12.0),
+                        padding: const EdgeInsets.all(4.0),
                         child: IconButton(
                           icon: const Icon(
                             Icons.flip_camera_android,
@@ -289,17 +259,38 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          if (isFlashOn) {
-                            _toggleFlash();
-                          }
                           // Navigate to SummaryScreen on button press
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PreviewScreen(
-                                      photos: capturedPhotos,
-                                    )),
-                          );
+                          if (isPhotoCaptured[0]==false||isPhotoCaptured[1]==false||isPhotoCaptured[2]==false) {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Incomplete Photos'),
+                                  content: const Text(
+                                      'Please take photos for all perspective before proceeding.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            if (isFlashOn) {
+                              _toggleFlash();
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => LoadingScreen(
+                                        photos: capturedPhotos,
+                                      )),
+                            );
+                          }
                         },
                         child: const Text('Finish'),
                       ),
@@ -310,26 +301,45 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-  Widget _buildCaptureButton() {
-    return SizedBox(
-      width: 100,
-      height: 100,
-      child: InkWell(
+  Widget _buildPhotoWidget(int index) {
+    return GestureDetector(
         onTap: () {
-          _onCapturePhoto(selectedIndex + 1);
+          _onCapturePhoto(index);
         },
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.blue,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.camera_alt,
-            color: Colors.white,
-            size: 50,
-          ),
-        ),
-      ),
-    );
+          width: width * 0.2,
+          height: height * 0.175,
+          color: isPhotoCaptured[index] ? Colors.transparent : Colors.blueGrey,
+          child: capturedPhotos[index] != null
+              ? Image.file(
+                  File(capturedPhotos[index]!.path),
+                  width: width * 0.2,
+                  height: height * 0.175,
+                )
+              : Container(
+                  width: width * 0.2,
+                  height: height * 0.175,
+                  color: Colors.transparent,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.camera_alt,
+                        size: 30,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        index == 0
+                            ? 'Roll the eyes left.'
+                            : index == 1
+                                ? 'Roll the eyes middle.'
+                                : 'Roll the eyes right.',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+        ));
   }
 }

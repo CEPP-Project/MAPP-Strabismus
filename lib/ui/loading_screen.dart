@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'summary_screen.dart';
+import 'package:flutter/services.dart';
 
 class LoadingScreen extends StatefulWidget {
   final List<XFile?> photos;
@@ -17,6 +18,20 @@ class _LoadingScreenState extends State<LoadingScreen> {
   void initState() {
     super.initState();
     _processData(context);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+  }
+  @override
+  void dispose(){
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
   }
 
   Future<void> _processData(BuildContext context) async {
