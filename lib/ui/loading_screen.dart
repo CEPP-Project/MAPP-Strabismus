@@ -31,7 +31,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   Future<void> _processData(BuildContext context) async {
     // Simulate API call with a delay
-    await Future.delayed(const Duration(seconds: 3));
+    // await Future.delayed(const Duration(seconds: 3));
 
     // Call API HERE !!!!
     try {
