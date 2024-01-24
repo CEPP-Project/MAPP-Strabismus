@@ -20,12 +20,13 @@ class _CameraScreenState extends State<CameraScreen> {
   bool isCameraReady = false;
   bool isFlashOn = false;
   bool isFrontCamera = false;
+  bool isPreviewVisible = true;
   int nowCamera = 0;
   List<bool> isPhotoCaptured = [false, false, false, false];
 
   void _onFlipCamera() async {
     // Ensure that the controller is initialized
-    if (!_controller.value.isInitialized) {
+    if (!_controller.value.isInitialized||!isPreviewVisible) {
       return;
     }
 
@@ -55,29 +56,29 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _onCapturePhoto(int buttonIndex) async {
-    if (!_controller.value.isInitialized) {
+    if (!_controller.value.isInitialized||!isPreviewVisible) {
       return;
     }
-    if (!isFlashOn) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Flash Required'),
-            content: const Text('Please turn on the flash to capture a photo.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
+    // if (!isFlashOn) {
+    //   showDialog(
+    //     context: context,
+    //     builder: (BuildContext context) {
+    //       return AlertDialog(
+    //         title: const Text('Flash Required'),
+    //         content: const Text('Please turn on the flash to capture a photo.'),
+    //         actions: [
+    //           TextButton(
+    //             onPressed: () {
+    //               Navigator.of(context).pop();
+    //             },
+    //             child: const Text('OK'),
+    //           ),
+    //         ],
+    //       );
+    //     },
+    //   );
+    //   return;
+    // }
     try {
       final XFile photo = await _controller.takePicture();
 
@@ -101,6 +102,8 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _initializeCamera() async {
+
+    nowCamera = 0;
     cameras = await availableCameras();
 
     isFrontCamera = cameras.isNotEmpty &&
@@ -118,6 +121,8 @@ class _CameraScreenState extends State<CameraScreen> {
     await _controller.setFlashMode(FlashMode.off);
 
     setState(() {
+      isFlashOn = false;
+      isPreviewVisible = true;
       isCameraReady = true;
     });
   }
@@ -126,7 +131,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (!_controller.value.isInitialized) {
       return;
     }
-    if (isFrontCamera) {
+    if (isFrontCamera||!isPreviewVisible) {
       return;
     }
 
@@ -140,6 +145,24 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() {
         isFlashOn = false;
       });
+    }
+  }
+
+  void _toggleCamera() {
+    if(isPreviewVisible){
+      if(isFlashOn){
+        _toggleFlash();
+        setState(() {
+          isFlashOn = false;
+        });
+      }
+      _controller.dispose();
+      setState(() {
+        isPreviewVisible = false;
+      });
+    }
+    else{
+      _initializeCamera();
     }
   }
 
@@ -174,16 +197,28 @@ class _CameraScreenState extends State<CameraScreen> {
       // ),
       body: Stack(
         children: [
-          CameraPreview(_controller),
-          Center(
+          isPreviewVisible
+              ? CameraPreview(_controller)
+              : SizedBox(
+                  width: width - 200,
+                  height: height,
+                  child: const Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Camera is disable.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+          isPreviewVisible? Center(
             child: SizedBox(
               width: width,
               height: height,
               child: Stack(
                 children: [
                   Positioned(
-                    left: width * 0.10,
-                    top: height * 0.4,
+                    left: 100,
+                    top: 150,
                     child: Container(
                       width: 200,
                       height: 100,
@@ -202,8 +237,8 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
                   Positioned(
-                    right: width * 0.3,
-                    top: height * 0.4,
+                    left: 450,
+                    top: 150,
                     child: Container(
                       width: 200,
                       height: 100,
@@ -224,7 +259,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 ],
               ),
             ),
-          ),
+          ):Container(),
           Align(
               alignment: Alignment.centerRight,
               child: Container(
@@ -257,42 +292,56 @@ class _CameraScreenState extends State<CameraScreen> {
                           onPressed: _onFlipCamera,
                         ),
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          // Navigate to SummaryScreen on button press
-                          if (isPhotoCaptured[0]==false||isPhotoCaptured[1]==false||isPhotoCaptured[2]==false) {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text('Incomplete Photos'),
-                                  content: const Text(
-                                      'Please take photos for all perspective before proceeding.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('OK'),
-                                    ),
-                                  ],
-                                );
+                      SizedBox(
+                        width: 200,
+                        child: Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: _toggleCamera,
+                              child: Text(
+                                  isPreviewVisible ? 'Stop Cam' : 'Start Cam'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                // Navigate to SummaryScreen on button press
+                                if (isPhotoCaptured[0] == false ||
+                                    isPhotoCaptured[1] == false ||
+                                    isPhotoCaptured[2] == false) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Incomplete Photos'),
+                                        content: const Text(
+                                            'Please take photos for all perspective before proceeding.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                } else {
+                                  if (isFlashOn) {
+                                    _toggleFlash();
+                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => LoadingScreen(
+                                              photos: capturedPhotos,
+                                            )),
+                                  );
+                                }
                               },
-                            );
-                          } else {
-                            if (isFlashOn) {
-                              _toggleFlash();
-                            }
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => LoadingScreen(
-                                        photos: capturedPhotos,
-                                      )),
-                            );
-                          }
-                        },
-                        child: const Text('Finish'),
+                              child: const Text('Finish'),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ))),
@@ -307,17 +356,17 @@ class _CameraScreenState extends State<CameraScreen> {
           _onCapturePhoto(index);
         },
         child: Container(
-          width: width * 0.2,
+          width: 200,
           height: height * 0.175,
           color: isPhotoCaptured[index] ? Colors.transparent : Colors.blueGrey,
           child: capturedPhotos[index] != null
               ? Image.file(
                   File(capturedPhotos[index]!.path),
-                  width: width * 0.2,
+                  width: 200,
                   height: height * 0.175,
                 )
               : Container(
-                  width: width * 0.2,
+                  width: 200,
                   height: height * 0.175,
                   color: Colors.transparent,
                   child: Row(
