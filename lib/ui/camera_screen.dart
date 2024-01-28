@@ -14,6 +14,11 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   double width = 0;
   double height = 0;
+  double camWidth = 0;
+  double camHeight = 0;
+  double menuSize = 150;
+  double eyewidth = 0;
+  double eyeheight =0;
   List<XFile?> capturedPhotos = List.filled(3, null);
   late CameraController _controller;
   late List<CameraDescription> cameras;
@@ -26,7 +31,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   void _onFlipCamera() async {
     // Ensure that the controller is initialized
-    if (!_controller.value.isInitialized||!isPreviewVisible) {
+    if (!_controller.value.isInitialized || !isPreviewVisible) {
       return;
     }
 
@@ -56,7 +61,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _onCapturePhoto(int buttonIndex) async {
-    if (!_controller.value.isInitialized||!isPreviewVisible) {
+    if (!_controller.value.isInitialized || !isPreviewVisible) {
       return;
     }
     // if (!isFlashOn) {
@@ -102,7 +107,6 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _initializeCamera() async {
-
     nowCamera = 0;
     cameras = await availableCameras();
 
@@ -121,6 +125,11 @@ class _CameraScreenState extends State<CameraScreen> {
     await _controller.setFlashMode(FlashMode.off);
 
     setState(() {
+      camWidth = _controller.value.previewSize?.width ?? 0.0;
+      camHeight = _controller.value.previewSize?.height ?? 0.0;
+
+      // print(camWidth);
+      // print(camHeight);
       isFlashOn = false;
       isPreviewVisible = true;
       isCameraReady = true;
@@ -131,7 +140,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (!_controller.value.isInitialized) {
       return;
     }
-    if (isFrontCamera||!isPreviewVisible) {
+    if (isFrontCamera || !isPreviewVisible) {
       return;
     }
 
@@ -149,8 +158,8 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   void _toggleCamera() {
-    if(isPreviewVisible){
-      if(isFlashOn){
+    if (isPreviewVisible) {
+      if (isFlashOn) {
         _toggleFlash();
         setState(() {
           isFlashOn = false;
@@ -160,8 +169,7 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() {
         isPreviewVisible = false;
       });
-    }
-    else{
+    } else {
       _initializeCamera();
     }
   }
@@ -182,7 +190,10 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
     height = MediaQuery.of(context).size.height;
-
+    eyewidth = (width-menuSize)/3;
+    eyeheight = height/3;
+    // print(width);
+    // print(height);
     if (!isCameraReady) {
       return const Scaffold(
         body: Center(
@@ -198,9 +209,13 @@ class _CameraScreenState extends State<CameraScreen> {
       body: Stack(
         children: [
           isPreviewVisible
-              ? CameraPreview(_controller)
+              ? SizedBox(
+                  height: height,
+                  width: width - menuSize,
+                  child: CameraPreview(_controller),
+                )
               : SizedBox(
-                  width: width - 200,
+                  width: width - menuSize,
                   height: height,
                   child: const Align(
                     alignment: Alignment.center,
@@ -210,56 +225,58 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
                 ),
-          isPreviewVisible? Center(
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: Stack(
-                children: [
-                  Positioned(
-                    left: 100,
-                    top: 150,
-                    child: Container(
-                      width: 200,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.rectangle,
-                        borderRadius: const BorderRadius.horizontal(
-                          left: Radius.circular(30),
-                          right: Radius.circular(30),
+          isPreviewVisible
+              ? Center(
+                  child: SizedBox(
+                    width: width,
+                    height: height,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: (width-menuSize)/4-eyewidth/2,
+                          top: height/2-eyeheight/2,
+                          child: Container(
+                            width: eyewidth,
+                            height: eyeheight,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.rectangle,
+                              borderRadius: const BorderRadius.horizontal(
+                                left: Radius.circular(30),
+                                right: Radius.circular(30),
+                              ),
+                              color: Colors.transparent,
+                              border: Border.all(
+                                color: Colors.black,
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
                         ),
-                        color: Colors.transparent,
-                        border: Border.all(
-                          color: Colors.black,
-                          width: 2.0,
+                        Positioned(
+                          left: 3*(width-menuSize)/4-eyewidth/2,
+                          top: height/2-eyeheight/2,
+                          child: Container(
+                            width: eyewidth,
+                            height: eyeheight,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.rectangle,
+                              borderRadius: const BorderRadius.horizontal(
+                                left: Radius.circular(30),
+                                right: Radius.circular(30),
+                              ),
+                              color: Colors.transparent,
+                              border: Border.all(
+                                color: Colors.black,
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                  Positioned(
-                    left: 450,
-                    top: 150,
-                    child: Container(
-                      width: 200,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.rectangle,
-                        borderRadius: const BorderRadius.horizontal(
-                          left: Radius.circular(30),
-                          right: Radius.circular(30),
-                        ),
-                        color: Colors.transparent,
-                        border: Border.all(
-                          color: Colors.black,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ):Container(),
+                )
+              : Container(),
           Align(
               alignment: Alignment.centerRight,
               child: Container(
@@ -271,37 +288,46 @@ class _CameraScreenState extends State<CameraScreen> {
                       _buildPhotoWidget(1),
                       _buildPhotoWidget(2),
                       Padding(
-                        padding: const EdgeInsets.all(4.0),
+                        padding: const EdgeInsets.all(0),
                         child: IconButton(
                           icon: Icon(
                             isFlashOn ? Icons.flash_on : Icons.flash_off,
-                            size: 36,
+                            size: 30,
                             color: Colors.black,
                           ),
                           onPressed: _toggleFlash,
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(4.0),
+                        padding: const EdgeInsets.all(0),
                         child: IconButton(
                           icon: const Icon(
                             Icons.flip_camera_android,
-                            size: 36,
+                            size: 30,
                             color: Colors.black,
                           ),
                           onPressed: _onFlipCamera,
                         ),
                       ),
                       SizedBox(
-                        width: 200,
+                        width: menuSize,
                         child: Row(
                           children: [
                             ElevatedButton(
                               onPressed: _toggleCamera,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.all(9),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                               child: Text(
-                                  isPreviewVisible ? 'Stop Cam' : 'Start Cam'),
+                                  isPreviewVisible ? 'Stop Cam' : 'Start Cam',
+                                  style: const TextStyle(fontSize: 15)),
                             ),
                             ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.all(0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                               onPressed: () {
                                 // Navigate to SummaryScreen on button press
                                 if (isPhotoCaptured[0] == false ||
@@ -311,7 +337,8 @@ class _CameraScreenState extends State<CameraScreen> {
                                     context: context,
                                     builder: (BuildContext context) {
                                       return AlertDialog(
-                                        title: const Text('Incomplete Photos'),
+                                        title: const Text('Incomplete Photos',
+                                            style: TextStyle(fontSize: 10)),
                                         content: const Text(
                                             'Please take photos for all perspective before proceeding.'),
                                         actions: [
@@ -349,24 +376,23 @@ class _CameraScreenState extends State<CameraScreen> {
       ),
     );
   }
-
   Widget _buildPhotoWidget(int index) {
     return GestureDetector(
         onTap: () {
           _onCapturePhoto(index);
         },
         child: Container(
-          width: 200,
+          width: menuSize,
           height: height * 0.175,
           color: isPhotoCaptured[index] ? Colors.transparent : Colors.blueGrey,
           child: capturedPhotos[index] != null
               ? Image.file(
                   File(capturedPhotos[index]!.path),
-                  width: 200,
+                  width: menuSize,
                   height: height * 0.175,
                 )
               : Container(
-                  width: 200,
+                  width: menuSize,
                   height: height * 0.175,
                   color: Colors.transparent,
                   child: Row(
@@ -377,14 +403,15 @@ class _CameraScreenState extends State<CameraScreen> {
                         size: 30,
                         color: Colors.white,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Text(
                         index == 0
                             ? 'Roll the eyes left.'
                             : index == 1
                                 ? 'Roll the eyes middle.'
                                 : 'Roll the eyes right.',
-                        style: const TextStyle(color: Colors.white),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 10),
                       ),
                     ],
                   ),
