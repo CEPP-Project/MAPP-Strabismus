@@ -190,8 +190,8 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
     height = MediaQuery.of(context).size.height;
-    eyewidth = (width-menuSize)/3;
-    eyeheight = height/3;
+    eyewidth = (width-menuSize)/4;
+    eyeheight = height/4;
     // print(width);
     // print(height);
     if (!isCameraReady) {
@@ -232,6 +232,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     height: height,
                     child: Stack(
                       children: [
+                        // left eye box
                         Positioned(
                           left: (width-menuSize)/4-eyewidth/2,
                           top: height/2-eyeheight/2,
@@ -252,6 +253,7 @@ class _CameraScreenState extends State<CameraScreen> {
                             ),
                           ),
                         ),
+                        // right eye box
                         Positioned(
                           left: 3*(width-menuSize)/4-eyewidth/2,
                           top: height/2-eyeheight/2,
