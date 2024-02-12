@@ -35,7 +35,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
     // Call API HERE !!!!
     try {
-      var apiUrl = Uri.parse('https://mapp-api.redaxn.com/upload-images');
+      var apiUrl = Uri.parse('https://mapp-api.redaxn.com/upload-images'); // real api
+      // var apiUrl = Uri.parse('http://10.0.2.2:8000/upload-images'); // testing with emulate
+      // var apiUrl = Uri.parse('http://192.168.x.x:8000/upload-images'); // testing with device on local network
 
       var request = http.MultipartRequest('POST', apiUrl);
 
