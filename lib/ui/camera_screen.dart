@@ -234,7 +234,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       children: [
                         // left eye box
                         Positioned(
-                          left: (width-menuSize)/4-eyewidth/2,
+                          left: 5*(width-menuSize)/16-eyewidth/2,
                           top: height/2-eyeheight/2,
                           child: Container(
                             width: eyewidth,
@@ -255,7 +255,7 @@ class _CameraScreenState extends State<CameraScreen> {
                         ),
                         // right eye box
                         Positioned(
-                          left: 3*(width-menuSize)/4-eyewidth/2,
+                          left: 11*(width-menuSize)/16-eyewidth/2,
                           top: height/2-eyeheight/2,
                           child: Container(
                             width: eyewidth,

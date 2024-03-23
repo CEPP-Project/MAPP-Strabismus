@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'summary_screen.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart' as p;
@@ -104,11 +103,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Loading Screen'),
-      ),
-      body: const Center(
+    return const Scaffold(
+      // appBar: AppBar(
+      //   title: const Text('Loading Screen'),
+      // ),
+      body: Center(
         child: CircularProgressIndicator(),
       ),
     );

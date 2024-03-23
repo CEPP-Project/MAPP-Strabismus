@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:strabismus/ui/camera_screen.dart';
-import 'package:flutter/services.dart';
+import 'package:strabismus/ui/mainmenu_screen.dart';
 
 class SummaryScreen extends StatelessWidget {
   final dynamic result;
@@ -10,9 +9,9 @@ class SummaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Result Screen'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Result Screen'),
+      // ),
       body: Center(
         child: Text('Result: $result'),
       ),
@@ -21,10 +20,10 @@ class SummaryScreen extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const CameraScreen()),
+              MaterialPageRoute(builder: (context) => const MainMenuScreen()),
             );
           },
-          child: const Text('Go back to Camera'),
+          child: const Text('Go back to Main menu'),
         ),
       ),
     );
