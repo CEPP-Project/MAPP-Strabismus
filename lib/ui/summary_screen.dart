@@ -16,6 +16,7 @@ class SummaryScreen extends StatelessWidget {
         child: Text('Result: $result'),
       ),
       bottomNavigationBar: BottomAppBar(
+        color: Colors.grey,
         child: ElevatedButton(
           onPressed: () {
             Navigator.push(

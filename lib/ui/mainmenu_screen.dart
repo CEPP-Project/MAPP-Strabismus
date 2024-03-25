@@ -19,6 +19,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       DeviceOrientation.portraitDown,
     ]);
   }
+
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations([
@@ -29,53 +30,101 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     ]);
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Main Menu'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Main Menu'),
+      // ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'Main Menu',
-              style: TextStyle(
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextButton(
+                onPressed: () {
+                  // Continue as guest no authentication
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const CameraScreen()),
+                  );
+                },
+                style: TextButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF222930), // Background color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    )),
+                child: const Text(
+                  'Strabismus Detect',
+                  style: TextStyle(
+                    fontSize: 24.0,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CameraScreen()),
-                );
-              },
-              child: const Text('Strabismus Detect'),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextButton(
+                onPressed: () {
+                  // Continue as guest no authentication
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const HistoryScreen()),
+                  );
+                },
+                style: TextButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF222930), // Background color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    )),
+                child: const Text(
+                  'History',
+                  style: TextStyle(
+                    fontSize: 24.0,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
-                );
-              },
-              child: const Text('History'),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 300.0,
+              height: 50.0,
+              child: TextButton(
+                onPressed: () {
+                  // Continue as guest no authentication
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
+                  );
+                },
+                style: TextButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF222930), // Background color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    )),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(
+                    fontSize: 24.0,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              },
-              child: const Text('Logout'),
-            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

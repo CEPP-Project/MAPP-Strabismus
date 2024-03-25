@@ -1,38 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:strabismus/ui/camera_screen.dart';
-import 'package:strabismus/ui/mainmenu_screen.dart';
+import 'package:strabismus/ui/login_screen.dart';
 import 'package:http/http.dart' as http;
-import 'package:strabismus/ui/register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-  }
-  @override
-  void dispose() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    super.dispose();
-  }
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +75,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 border: OutlineInputBorder(),
               ),
             ),
-            // No account? Register
+            const SizedBox(height: 20.0),
+            // Confirm Password Field
+            Container(
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                'Confirm Password',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontSize: 18.0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 5.0),
+            TextFormField(
+              controller: _confirmPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            // Have account? Login
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -104,43 +105,49 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                     );
                   },
                   child: const Text(
-                    'No account? Register',
+                    'Already Have Account? Login',
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20.0),
-            // Login Button
+            // Register Button
             SizedBox(
               width: double.infinity,
               height: 50.0,
               child: ElevatedButton(
-                // login send username password to api for token
                 onPressed: () {
                   String username = _usernameController.text;
                   String password = _passwordController.text;
-
-                  _login(username, password).then((result){
-                    result = 0;
+                  String confirmPassword = _confirmPasswordController.text;
+                  // Pass username and password to your registration function
+                  _register(username, password, confirmPassword).then((result){
+                    //register success
                     if(result==0){
+                      _errorPopup('Register Success', 'Your registration is success.');
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const MainMenuScreen()),
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
                       );
                     }
+                    //password not match
                     else if(result==1){
-                      _errorPopup('Authentication Error!!!', 'Username or Password is wrong.');
+                      _errorPopup('Password is not match!!!', 'Your password is not match.');
                     }
+                    //already have this username
                     else if(result==2){
-                      _errorPopup('Authentication Error!!!', 'Missing Username or Password.');
+                      _errorPopup('Register Error!!!', 'Your username already taken.');
                     }
                     else if(result==3){
-                      _errorPopup('Authentication Error!!!', 'Unknown error has occurred.');
+                      _errorPopup('Register Error!!!', 'Unknown error has occurred.');
+                    }
+                    else if(result==4){
+                      _errorPopup('Register Error!!!', 'Missing username or password.');
                     }
                   });
                 },
@@ -148,30 +155,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   backgroundColor: const Color(0xFF222930), // Background color
                 ),
                 child: const Text(
-                  'Login',
-                  style: TextStyle(fontSize: 18.0,color: Colors.white,),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10.0),
-            // Continue as Guest
-            SizedBox(
-              width: double.infinity,
-              height: 50.0,
-              child: TextButton(
-                onPressed: () {
-                  // Continue as guest no authentication
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const CameraScreen()),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF222930), // Background color
-                ),
-                child: const Text(
-                  'Continue as Guest',
-                  style: TextStyle(fontSize: 18.0,color: Colors.white,),
+                  'Register',
+                  style: TextStyle(fontSize: 18.0,color:Colors.white),
                 ),
               ),
             ),
@@ -202,21 +187,24 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<int> _login(String username, String password) async{
-    // Implement your API call here using username and password
-    if(username.isEmpty||password.isEmpty){
-      return 2;
+  Future<int> _register(String username, String password, String confirmPassword) async{
+    // Implement your registration logic here
+    if(username.isEmpty || password.isEmpty){
+      return 4;
+    }
+    if(password!=confirmPassword){
+      return 1;
     }
     try {
       var apiUrl = Uri.parse('https://mapp-api.redaxn.com/');
       var request = http.MultipartRequest('POST', apiUrl);
       var response = await request.send().timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
-        //assign token then return login success
+        //return register success
         return 0;
       }
       else{
-        return 1;
+        return 2;
       }
       // Call your API function here passing username and password
     }catch(e) {
@@ -224,5 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // print('Error uploading images: $e');
       return 3;
     }
+    // Call your registration API function here passing username, password, and confirmPassword
   }
 }
+
