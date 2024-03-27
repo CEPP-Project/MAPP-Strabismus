@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:strabismus/ui/history_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:http/http.dart' as http;
 
 class GraphScreen extends StatefulWidget {
   const GraphScreen({super.key});
@@ -11,6 +13,24 @@ class GraphScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<GraphScreen> {
+  List<DateTime> timestamps = [
+     DateTime(2023, 3, 25, 0, 0), // default for loading
+    // DateTime(2024, 3, 26, 1, 0),
+    // DateTime(2024, 3, 27, 2, 0),
+    // DateTime(2024, 3, 29, 3, 0),
+    // DateTime(2024, 4, 1, 3, 0),
+    // Add more timestamps as needed
+  ];
+
+  List<double> values = [
+     30, // Example values corresponding to timestamps
+    // 50,
+    // 80,
+    // 60,
+    // 50,
+    // Add more values as needed
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -19,7 +39,10 @@ class _HistoryScreenState extends State<GraphScreen> {
       DeviceOrientation.landscapeLeft,
     ]);
     _fetchData().then((result){
-      historyItems=result;
+      setState(() {
+        timestamps=result[0] as List<DateTime>;
+        values=result[1] as List<double>;
+      });
     });
   }
 
@@ -34,107 +57,104 @@ class _HistoryScreenState extends State<GraphScreen> {
     super.dispose();
   }
 
-  List<Map<String, String>> historyItems= [];
-
-  final List<DateTime> timestamps = [
-    DateTime(2024, 3, 25, 0, 0), // Example timestamps
-    DateTime(2024, 3, 26, 1, 0),
-    DateTime(2024, 3, 27, 2, 0),
-    DateTime(2024, 3, 29, 3, 0),
-    DateTime(2024, 4, 1, 3, 0),
-    // Add more timestamps as needed
-  ];
-
-  final List<double> values = [
-    30, // Example values corresponding to timestamps
-    50,
-    80,
-    60,
-    50,
-    // Add more values as needed
-  ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('History'),
-      // ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: LineChart(
-          LineChartData(
-            minX: (timestamps.first.millisecondsSinceEpoch.toDouble()/86400000).floorToDouble(),
-            maxX: (timestamps.last.millisecondsSinceEpoch.toDouble()/86400000).floorToDouble(),
-            minY: 0,
-            maxY: 100,
-            lineBarsData: [
-              LineChartBarData(
-                spots: List.generate(
-                  timestamps.length,
-                  (index) => FlSpot(
-                    (timestamps[index].millisecondsSinceEpoch.toDouble()/86400000).floorToDouble(),
-                    values[index],
+    if (timestamps[0] == DateTime(2023, 3, 25, 0, 0)) {
+      return const Scaffold(
+        // appBar: AppBar(
+        //   title: const Text('Loading Screen'),
+        // ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    else {
+      return Scaffold(
+        // appBar: AppBar(
+        //   title: const Text('History'),
+        // ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: LineChart(
+            LineChartData(
+              minX: (timestamps.first.millisecondsSinceEpoch.toDouble() /
+                  86400000).floorToDouble(),
+              maxX: (timestamps.last.millisecondsSinceEpoch.toDouble() /
+                  86400000).floorToDouble(),
+              minY: 0,
+              maxY: 100,
+              lineBarsData: [
+                LineChartBarData(
+                  spots: List.generate(
+                    timestamps.length,
+                        (index) =>
+                        FlSpot(
+                          (timestamps[index].millisecondsSinceEpoch.toDouble() /
+                              86400000).floorToDouble(),
+                          values[index],
+                        ),
+                  ),
+                  isCurved: true,
+                  color: Colors.blue,
+                  barWidth: 4,
+                  belowBarData: BarAreaData(show: false),
+                ),
+              ],
+              titlesData: FlTitlesData(
+                show: true,
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    getTitlesWidget: bottomTitleWidgets,
+                    interval: 1,
                   ),
                 ),
-                isCurved: true,
-                color: Colors.blue,
-                barWidth: 4,
-                belowBarData: BarAreaData(show: false),
-              ),
-            ],
-            titlesData: FlTitlesData(
-              show: true,
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 30,
-                  getTitlesWidget: bottomTitleWidgets,
-                  interval: 1,
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: leftTitleWidgets,
+                    reservedSize: 42,
+                    interval: 1,
+                  ),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
                 ),
               ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: leftTitleWidgets,
-                  reservedSize: 42,
-                  interval: 1,
-                ),
+              borderData: FlBorderData(
+                show: true,
+                border: Border.all(color: Colors.black, width: 1),
               ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-            ),
-            borderData: FlBorderData(
-              show: true,
-              border: Border.all(color: Colors.black, width: 1),
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.grey,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const HistoryScreen()),
-                );
-              },
-              child: const Text('Go back to History',
-                  style: TextStyle(fontSize: 24, color: Colors.black)),
-            ),
-          ],
+        bottomNavigationBar: BottomAppBar(
+          color: Colors.grey,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const HistoryScreen()),
+                  );
+                },
+                child: const Text('Go back to History',
+                    style: TextStyle(fontSize: 24, color: Colors.black)),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   Widget bottomTitleWidgets(double value, TitleMeta meta) {
@@ -193,18 +213,39 @@ class _HistoryScreenState extends State<GraphScreen> {
     return prefs.getString('token') ?? '';
   }
 
-  Future<List<Map<String, String>>> _fetchData() async{
+  Future<List<List>> _fetchData() async{
     String token= '';
-    _getToken().then((result){
+    await _getToken().then((result){
       token = result;
     });
-    List<Map<String,String>> result = [
-      {
-      "rate": "80",
-      "result": "true",
-      "timestamp": "2024-03-23 09:00:00"
-      }
-    ];
-    return result;
+    List<dynamic> jsonList = [];
+    try{
+      final response = await http.get(
+        Uri.parse('https://mapp-api.redaxn.com/user/graph'),
+        headers: {
+          'Content-Type':'application/json',
+          'Authorization':'Bearer $token'
+        },
+      );
+      //print(response.body);
+      jsonList = await jsonDecode(response.body);
+    }catch(e) {
+      // Handle other errors
+      // print('Error : $e');
+    }
+    List<DateTime>  timestamps=[];
+    List<double>  rates=[];
+    for(var jsonMap in jsonList) {
+      // Extract timestamp
+      String timestampString = jsonMap['timestamp'].substring(0, 19).replaceAll('T', ' ');
+      DateTime timestamp = DateTime.parse(timestampString);
+      timestamps.add(timestamp);
+
+      // Extract rate
+      Map<String, dynamic> rateMap = jsonMap['result'][1];
+      double rateValue = 100.0 - rateMap.values.first * 100; // Convert to percentage
+      rates.add(rateValue);
+    }
+    return [timestamps,rates];
   }
 }

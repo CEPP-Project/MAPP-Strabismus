@@ -215,6 +215,8 @@ class _LoginScreenState extends State<LoginScreen> {
           headers: {'Content-Type':'application/json'},
           body: jsonEncode({'username':username, 'password': password})
       );
+      // print("response status code: ${response.statusCode}");
+      // print("response body: ${response.body}");
       if (response.statusCode == 200) {
         //assign token then return login success
         final token = jsonDecode(response.body)['access_token'];

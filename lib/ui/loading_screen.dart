@@ -36,7 +36,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
     // Call API HERE !!!!
     try {
       String token = '';
-      _getToken().then((result) {
+      await _getToken().then((result) {
         token = result;
       });
       var apiUrl =

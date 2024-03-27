@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:strabismus/ui/graph_screen.dart';
-
+import 'package:http/http.dart' as http;
 import 'mainmenu_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -12,6 +14,8 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  List<Map<String, String>> historyItems = [];
+
   @override
   void initState() {
     super.initState();
@@ -20,7 +24,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       DeviceOrientation.portraitDown,
     ]);
     _fetchData().then((result){
-      historyItems=result;
+      setState(() {
+        historyItems=result;
+      });
     });
   }
 
@@ -35,27 +41,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
     super.dispose();
   }
 
-  List<Map<String, String>> historyItems = [
-    {
-      "rate": "80",
-      "result": "true",
-      "timestamp": "2024-03-23 09:00:00"
-    },
-    {
-      "rate": "70",
-      "result": "false",
-      "timestamp": "2024-03-22 14:30:00"
-    },
-    {
-      "rate": "70",
-      "result": "true",
-      "timestamp": "2024-03-21 18:45:00"
-    },
-    // Add more history items as needed
-  ];
-
   @override
   Widget build(BuildContext context) {
+    if(historyItems==[]){
+      return const Scaffold(
+        // appBar: AppBar(
+        //   title: const Text('Loading Screen'),
+        // ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return Scaffold(
       // appBar: AppBar(
       //   title: const Text('History'),
@@ -87,7 +84,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
                     // Item1 on the right top
-                    Text('Strabismus Rate: ${historyItems[index]['rate']!}%' ,style: const TextStyle(fontSize: 16.0),),
+                    Text('Strabismus Rate: ${historyItems[index]['rate']!}' ,style: const TextStyle(fontSize: 16.0),),
                     // Item2 on the right bottom
                     Text(
                       historyItems[index]['result'] ?? '',
@@ -140,16 +137,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<List<Map<String, String>>> _fetchData() async{
     String token= '';
-    _getToken().then((result){
+    await _getToken().then((result){
       token = result;
     });
-    List<Map<String,String>> result = [
-      {
-        "rate": "80",
-        "result": "true",
-        "timestamp": "2024-03-23 09:00:00"
-      }
-    ];
+
+    List<Map<String,String>> result = [];
+    List<dynamic> jsonList = [];
+
+    try{
+      final response = await http.get(
+          Uri.parse('https://mapp-api.redaxn.com/user/history'),
+          headers: {
+            'Content-Type':'application/json',
+            'Authorization':'Bearer $token'
+          },
+      );
+      //print(response.body);
+      jsonList = await jsonDecode(response.body);
+    }catch(e) {
+      // Handle other errors
+      // print('Error : $e');
+    }
+    for(var jsonMap in jsonList) {
+      bool res = jsonMap['result'][0];
+      Map<String, dynamic> rateMap = jsonMap['result'][1];
+      double rateValue = 100.0-rateMap.values.first * 100;
+      String rate = '${rateValue.toStringAsFixed(0)}%';
+      String timestamp = jsonMap['timestamp'].substring(0,19).replaceAll('T',' ');
+
+      result.add({
+        'rate': rate,
+        'result': res.toString(),
+        'timestamp': timestamp,
+      });
+    }
     return result;
   }
 }
