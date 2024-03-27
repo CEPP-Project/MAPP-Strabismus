@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:strabismus/ui/camera_screen.dart';
 import 'package:strabismus/ui/mainmenu_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:strabismus/ui/register_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -126,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   String password = _passwordController.text;
 
                   _login(username, password).then((result){
-                    result = 0;
                     if(result==0){
                       Navigator.push(
                         context,
@@ -208,11 +210,16 @@ class _LoginScreenState extends State<LoginScreen> {
       return 2;
     }
     try {
-      var apiUrl = Uri.parse('https://mapp-api.redaxn.com/');
-      var request = http.MultipartRequest('POST', apiUrl);
-      var response = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.post(
+          Uri.parse('https://mapp-api.redaxn.com/auth/login'),
+          headers: {'Content-Type':'application/json'},
+          body: jsonEncode({'username':username, 'password': password})
+      );
       if (response.statusCode == 200) {
         //assign token then return login success
+        final token = jsonDecode(response.body)['access_token'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
         return 0;
       }
       else{
@@ -221,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Call your API function here passing username and password
     }catch(e) {
       // Handle other errors
-      // print('Error uploading images: $e');
+     // print('Error : $e');
       return 3;
     }
   }

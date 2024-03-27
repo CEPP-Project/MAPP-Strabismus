@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:strabismus/ui/login_screen.dart';
 import 'package:http/http.dart' as http;
@@ -196,9 +198,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 1;
     }
     try {
-      var apiUrl = Uri.parse('https://mapp-api.redaxn.com/');
-      var request = http.MultipartRequest('POST', apiUrl);
-      var response = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.post(
+          Uri.parse('https://mapp-api.redaxn.com/auth/register'),
+          headers: {'Content-Type':'application/json'},
+          body: jsonEncode({'username':username, 'password': password})
+      );
       if (response.statusCode == 200) {
         //return register success
         return 0;

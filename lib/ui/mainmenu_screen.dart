@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:strabismus/ui/camera_screen.dart';
 import 'package:strabismus/ui/history_screen.dart';
 import 'package:strabismus/ui/login_screen.dart';
@@ -102,7 +103,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               height: 50.0,
               child: TextButton(
                 onPressed: () {
-                  // Continue as guest no authentication
+                  _clearToken();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -129,5 +130,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         ),
       ),
     );
+  }
+  Future<void> _clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
   }
 }

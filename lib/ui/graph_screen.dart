@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:strabismus/ui/history_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -10,24 +11,6 @@ class GraphScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<GraphScreen> {
-  final List<DateTime> timestamps = [
-    DateTime(2024, 3, 25, 0, 0), // Example timestamps
-    DateTime(2024, 3, 26, 1, 0),
-    DateTime(2024, 3, 27, 2, 0),
-    DateTime(2024, 3, 27, 3, 0),
-    DateTime(2024, 4, 1, 3, 0),
-    // Add more timestamps as needed
-  ];
-
-  final List<double> values = [
-    30, // Example values corresponding to timestamps
-    50,
-    80,
-    60,
-    50,
-    // Add more values as needed
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -35,7 +18,9 @@ class _HistoryScreenState extends State<GraphScreen> {
       DeviceOrientation.landscapeRight,
       DeviceOrientation.landscapeLeft,
     ]);
-    //_fetchData();
+    _fetchData().then((result){
+      historyItems=result;
+    });
   }
 
   @override
@@ -48,6 +33,26 @@ class _HistoryScreenState extends State<GraphScreen> {
     ]);
     super.dispose();
   }
+
+  List<Map<String, String>> historyItems= [];
+
+  final List<DateTime> timestamps = [
+    DateTime(2024, 3, 25, 0, 0), // Example timestamps
+    DateTime(2024, 3, 26, 1, 0),
+    DateTime(2024, 3, 27, 2, 0),
+    DateTime(2024, 3, 29, 3, 0),
+    DateTime(2024, 4, 1, 3, 0),
+    // Add more timestamps as needed
+  ];
+
+  final List<double> values = [
+    30, // Example values corresponding to timestamps
+    50,
+    80,
+    60,
+    50,
+    // Add more values as needed
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +188,23 @@ class _HistoryScreenState extends State<GraphScreen> {
 
     return Text(text, style: style, textAlign: TextAlign.left);
   }
-  // void _fetchdata(){
-  //
-  // }
+  Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
+  Future<List<Map<String, String>>> _fetchData() async{
+    String token= '';
+    _getToken().then((result){
+      token = result;
+    });
+    List<Map<String,String>> result = [
+      {
+      "rate": "80",
+      "result": "true",
+      "timestamp": "2024-03-23 09:00:00"
+      }
+    ];
+    return result;
+  }
 }

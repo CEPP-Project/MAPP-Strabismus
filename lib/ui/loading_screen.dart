@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'summary_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
@@ -23,8 +23,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
     super.initState();
     _processData(context);
   }
+
   @override
-  void dispose(){
+  void dispose() {
     super.dispose();
   }
 
@@ -34,7 +35,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
     // Call API HERE !!!!
     try {
-      var apiUrl = Uri.parse('https://mapp-api.redaxn.com/upload-images'); // real api
+      String token = '';
+      _getToken().then((result) {
+        token = result;
+      });
+      var apiUrl =
+          Uri.parse('https://mapp-api.redaxn.com/uploads/detect'); // real api
       // var apiUrl = Uri.parse('http://10.0.2.2:8000/upload-images'); // testing with emulate
       // var apiUrl = Uri.parse('http://192.168.x.x:8000/upload-images'); // testing with device on local network
 
@@ -58,28 +64,29 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
         request.files.add(multipartFile);
       }
-
+      if (token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
       var response = await request.send().timeout(const Duration(seconds: 30));
-      // print('Response Status Code: ${response.statusCode}');
-      // print('Response Body: ${await response.stream.bytesToString()}');
+       print('Response Status Code: ${response.statusCode}');
+       print('Response Body: ${await response.stream.bytesToString()}');
 
       if (response.statusCode == 200) {
         // API call was successful, process the response as needed
         var responseBody = await response.stream.bytesToString();
 
         var result = json.decode(responseBody);
-        if(context.mounted){
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => SummaryScreen(result: result)));
+        if (context.mounted) {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => SummaryScreen(result: result)));
         }
-        
       } else {
         // API call failed, handle the error
         // print('Failed to upload images. Status code: ${response.statusCode}');
       }
-
-    } catch(e) {
+    } catch (e) {
       // Handle other errors
-      // print('Error uploading images: $e');
+      print('Error uploading images: $e');
     }
 
     // You can pass any result to the next screen, such as processed data
@@ -99,6 +106,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
       default:
         return 'application/octet-stream';
     }
+  }
+
+  Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
   }
 
   @override

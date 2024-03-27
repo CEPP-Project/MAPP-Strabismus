@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:strabismus/ui/graph_screen.dart';
 
 import 'mainmenu_screen.dart';
@@ -18,7 +19,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    //_fetchData();
+    _fetchData().then((result){
+      historyItems=result;
+    });
   }
 
   @override
@@ -130,7 +133,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
   }
-// void _fetchdata(){
-//
-// }
+  Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
+  Future<List<Map<String, String>>> _fetchData() async{
+    String token= '';
+    _getToken().then((result){
+      token = result;
+    });
+    List<Map<String,String>> result = [
+      {
+        "rate": "80",
+        "result": "true",
+        "timestamp": "2024-03-23 09:00:00"
+      }
+    ];
+    return result;
+  }
 }
