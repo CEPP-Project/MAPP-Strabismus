@@ -80,9 +80,9 @@ class _HistoryScreenState extends State<GraphScreen> {
           child: LineChart(
             LineChartData(
               minX: (timestamps.first.millisecondsSinceEpoch.toDouble() /
-                  86400000).floorToDouble(),
+                  86400000.0).floorToDouble(),
               maxX: (timestamps.last.millisecondsSinceEpoch.toDouble() /
-                  86400000).floorToDouble(),
+                  86400000.0).floorToDouble(),
               minY: 0,
               maxY: 100,
               lineBarsData: [
@@ -96,7 +96,7 @@ class _HistoryScreenState extends State<GraphScreen> {
                           values[index],
                         ),
                   ),
-                  isCurved: true,
+                  isCurved: false,
                   color: Colors.blue,
                   barWidth: 4,
                   belowBarData: BarAreaData(show: false),
@@ -165,7 +165,7 @@ class _HistoryScreenState extends State<GraphScreen> {
     Widget text;
     text = const Text('', style: style);
     for(var i in timestamps){
-      if (value == (i.millisecondsSinceEpoch.toDouble()/86400000).floorToDouble()){
+      if (value == (i.millisecondsSinceEpoch.toDouble()/86400000.0).floorToDouble()){
         text = Text('${i.day.toInt()}/${i.month.toInt()}/${i.year.toInt()}', style: style);
         break;
       }
@@ -242,8 +242,8 @@ class _HistoryScreenState extends State<GraphScreen> {
       timestamps.add(timestamp);
 
       // Extract rate
-      Map<String, dynamic> rateMap = jsonMap['result'][1];
-      double rateValue = 100.0 - rateMap.values.first * 100; // Convert to percentage
+     // Map<String, dynamic> rateMap = jsonMap['result'][1];
+      double rateValue = jsonMap['result'][1][1] * 100; // Convert to percentage
       rates.add(rateValue);
     }
     return [timestamps,rates];

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:strabismus/ui/mainmenu_screen.dart';
 import 'summary_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
@@ -67,9 +68,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
       if (token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
       }
-      var response = await request.send().timeout(const Duration(seconds: 30));
+      var response = await request.send().timeout(const Duration(seconds: 90));
        print('Response Status Code: ${response.statusCode}');
-       print('Response Body: ${await response.stream.bytesToString()}');
+       //print('Response Body: ${await response.stream.bytesToString()}');
 
       if (response.statusCode == 200) {
         // API call was successful, process the response as needed
@@ -81,8 +82,29 @@ class _LoadingScreenState extends State<LoadingScreen> {
               builder: (context) => SummaryScreen(result: result)));
         }
       } else {
-        // API call failed, handle the error
-        // print('Failed to upload images. Status code: ${response.statusCode}');
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title:  const Text("Fail to Upload Image",
+                    style: TextStyle(fontSize: 20)),
+                content:  const Text(
+                    "Unknown error has occurred. Return to main menu"),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => const MainMenuScreen()));
+        }
       }
     } catch (e) {
       // Handle other errors

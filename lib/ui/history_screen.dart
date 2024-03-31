@@ -66,7 +66,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           String time = "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
 
           // Formatting info2
-          Color info2Color = historyItems[index]['result'] == "true" ? Colors.green : Colors.red;
+          Color info2Color = historyItems[index]['result'] == "true" ? Colors.red : Colors.green;
 
           return Column(
             children: [
@@ -159,9 +159,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       // print('Error : $e');
     }
     for(var jsonMap in jsonList) {
+      //print(jsonMap);
       bool res = jsonMap['result'][0];
-      Map<String, dynamic> rateMap = jsonMap['result'][1];
-      double rateValue = 100.0-rateMap.values.first * 100;
+      //Map<double, double> rateMap = jsonMap['result'][1];
+      double rateValue = jsonMap['result'][1][1] * 100;
       String rate = '${rateValue.toStringAsFixed(0)}%';
       String timestamp = jsonMap['timestamp'].substring(0,19).replaceAll('T',' ');
 

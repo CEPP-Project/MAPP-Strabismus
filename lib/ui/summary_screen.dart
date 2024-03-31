@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:strabismus/ui/login_screen.dart';
@@ -10,16 +12,49 @@ class SummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Map<String, dynamic> variable = result;
+    bool trueValue = variable['result'][0];
+    double pointEightOneValue = variable['result'][1][1];
+    String percentageValue =
+        '${(pointEightOneValue * 100).toStringAsFixed(0)}%';
+
     return Scaffold(
       // appBar: AppBar(
       //   title: const Text('Result Screen'),
       // ),
       body: Center(
-        child: Text('Result: $result'),
-      ),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text(
+          'Strabismus Rate $percentageValue',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontSize: 18.0,
+          ),
+        ),
+        Text(
+          'You are ${trueValue == true ? "" : "not"} likely to be Strabismus',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontSize: 18.0,
+          ),
+        ),
+      ])),
       bottomNavigationBar: BottomAppBar(
         color: Colors.grey,
-        child: _returnButton(context)
+        child: FutureBuilder(
+          future: _getToken(),
+          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+            if (snapshot.hasData) {
+              return _returnButton(context, snapshot.data);
+            } else {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -29,38 +64,27 @@ class SummaryScreen extends StatelessWidget {
     return prefs.getString('token') ?? '';
   }
 
-  Widget _returnButton(BuildContext context) {
-    _getToken().then((result) {
-      if (result.isNotEmpty) {
-        return ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const MainMenuScreen()),
-            );
-          },
-          child: const Text('Go back to Main menu'),
-        );
-      } else {
-        return ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-            );
-          },
-          child: const Text('Go back to Login'),
-        );
-      }
-    });
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      },
-      child: const Text('Go back to Login'),
-    );
+  Widget _returnButton(BuildContext context, String? result) {
+    if (result != null && result.isNotEmpty) {
+      return ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MainMenuScreen()),
+          );
+        },
+        child: const Text('Go back to Main menu'),
+      );
+    } else {
+      return ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        },
+        child: const Text('Go back to Login'),
+      );
+    }
   }
 }
